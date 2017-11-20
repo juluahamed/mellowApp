@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+	{% for category in categories %}
+	<div class="col-md-3 col-xs-12 card category-card"
+	onclick="location.href='{% url 'viewcategory' category.id %}';">
+		<h4>{{category.name}}</h4>
+		<p><a href="{% url 'deletecategory' category.id %}"><span class="glyphicon glyphicon-trash"></span></a></p>
+	</div>
+	{% endfor %}
+	{% if not categories %}
+		<div class="col-md-12">
+			<p class="text-center"> You dont have any categories yet! </p>
+		</div>
+	{% endif %}
+{% endblock %}

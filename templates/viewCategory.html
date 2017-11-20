@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+	<div data-bind="foreach: tasks">
+		<div class="col-md-3 col-xs-12 card task-card flex-item">
+			<h4 data-bind="text: name"></h4>
+			<p data-bind="text: description"></p>
+			<p><input type="text" class="order_input" data-bind="value: order"><button data-bind="click: $parent.validateOrderUpdate"><span class="glyphicon glyphicon-sort"></span></button></p>
+			<a data-bind="attr: { href: e_url}"><span class="glyphicon glyphicon-edit">Edit</span></a>
+			<a data-bind="attr: { href: d_url}"><span class="glyphicon glyphicon-trash">Delete</span></a>
+		</div>
+	</div>
+{% endblock %}
+
+{% block knockout %}
+<script>  
+        var csrftoken = Cookies.get('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+        $.ajaxSetup({
+            beforeSend: function (xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+	function Task(data) {
+		var self = this;
+		self.id = data.id
+		self.name = data.name;
+		self.description = data.description;
+		self.order = data.order;
+		self.e_url = "/category/{{cat_id}}/task/" + self.id + "/edit"
+		self.d_url = "/category/{{cat_id}}/task/" + self.id + "/delete"
+
+		self.updateOrder = function(order) {
+			self.order = order;
+
+		}
+	}
+
+	function TaskListViewModel() {
+		var self = this;
+		var return_data = {}
+		self.tasks = ko.observableArray([]);
+		self.validateOrderUpdate = function(task){
+			if (task.order < 1 || task.order > self.tasks().length) {
+                    	return null
+            }
+            ko.utils.arrayFilter(self.tasks(), function (eachtask) {
+                if (eachtask.order == task.order && eachtask.id != task.id) {
+                	$.ajax("{% url 'gettasks' cat_id %}", {
+	                    data: {'target': eachtask.id, 'source': task.id},
+	                    type: "POST",
+	                    success: function (result) {
+	                        if (result[0].status == 'OK') {
+	                        	self.sync();
+	                        }
+                    	}
+        			});
+                }
+
+            });
+		}                
+           
+		self.sync = function(){
+			$.getJSON("{% url 'gettasks' cat_id %}", function(allData) {
+	        	var mappedTasks = $.map(allData, function(item) { return new Task(item) });
+	        	self.tasks(mappedTasks);
+	    	});
+		};
+
+		self.sync();
+	}
+
+	ko.applyBindings(new TaskListViewModel());
+</script>
+{% endblock %}
