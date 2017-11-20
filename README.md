@@ -8,7 +8,7 @@
 
 ## Installation and Usage
 - Set up a virtual env and install the dependencies listed in requirements.txt
-- clone this repo
+- Clone this repo
 - Start the development server
 ``` python manage.py runserver```
 
